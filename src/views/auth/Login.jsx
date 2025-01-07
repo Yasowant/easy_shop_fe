@@ -1,25 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { PropagateLoader } from 'react-spinners';
+import { overrideStyle } from '../../utils/utils';
+import { seller_login } from '../../store/Reducers/authReducer';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [state, setState] = useState({
     email: '',
     password: '',
   });
 
+  const { loader, successMessage, errorMessage } = useSelector(
+    (state) => state.auth
+  );
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setState({
+      ...state,
       [name]: value,
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form Data Submitted:', formData);
+    dispatch(seller_login(state));
+    console.log('Form Data Submitted:', state);
     // Add form submission logic here
   };
+
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch({ type: 'auth/messageClear' }); // Dispatch action to clear messages
+    }
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch({ type: 'auth/messageClear' }); // Dispatch action to clear messages
+    }
+  }, [errorMessage, successMessage, dispatch, navigate]);
 
   return (
     <div className="min-w-screen min-h-screen bg-[#cdcae9] flex justify-center items-center">
@@ -42,7 +65,7 @@ const Login = () => {
                 type="email"
                 id="email"
                 name="email"
-                value={formData.email}
+                value={state.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
                 className="p-2 rounded-md outline-none text-black"
@@ -59,7 +82,7 @@ const Login = () => {
                 type="password"
                 id="password"
                 name="password"
-                value={formData.password}
+                value={state.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
                 className="p-2 rounded-md outline-none text-black"
@@ -69,10 +92,15 @@ const Login = () => {
 
             {/* Submit Button */}
             <button
+              disabled={loader}
               type="submit"
               className="bg-[#4c43a1] w-full p-2 rounded-md text-white font-bold hover:bg-[#5d54b8] transition duration-200"
             >
-              Sign In
+              {loader ? (
+                <PropagateLoader color="white" cssOverride={overrideStyle} />
+              ) : (
+                'Sing in'
+              )}
             </button>
 
             <div className="flex items-center mb-3 gap-3 justify-center">

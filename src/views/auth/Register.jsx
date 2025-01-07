@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { PropagateLoader } from 'react-spinners';
+import { overrideStyle } from '../../utils/utils';
+import { seller_register } from '../../store/Reducers/authReducer';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loader, successMessage, errorMessage } = useSelector(
+    (state) => state.auth
+  );
   const [state, setState] = useState({
     name: '',
     email: '',
@@ -19,12 +30,24 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    dispatch(seller_register(state));
     if (!state.checkbox) {
       alert('Please agree to the privacy policy & terms.');
       return;
     }
     console.log('Form Data:', state);
   };
+
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch({ type: 'auth/messageClear' }); // Dispatch action to clear messages
+    }
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch({ type: 'auth/messageClear' }); // Dispatch action to clear messages
+    }
+  }, [errorMessage, successMessage, dispatch, navigate]);
 
   return (
     <div className="min-w-screen min-h-screen bg-[#cdcae9] flex justify-center items-center">
@@ -106,10 +129,15 @@ const Register = () => {
 
             {/* Submit Button */}
             <button
+              disabled={loader}
               type="submit"
               className="bg-[#4c43a1] w-full p-2 rounded-md text-white font-bold hover:bg-[#5d54b8] transition duration-200"
             >
-              Sign Up
+              {loader ? (
+                <PropagateLoader color="white" cssOverride={overrideStyle} />
+              ) : (
+                'Sign up'
+              )}
             </button>
 
             <div className="flex items-center mb-3 gap-3 justify-center">
