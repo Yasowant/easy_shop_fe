@@ -41,6 +41,7 @@ const Login = () => {
     if (successMessage) {
       toast.success(successMessage);
       dispatch({ type: 'auth/messageClear' }); // Dispatch action to clear messages
+      navigate('/');
     }
   }, [errorMessage, successMessage, dispatch, navigate]);
 
