@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Pagination from '../Pagination';
 import { FaE } from 'react-icons/fa6';
@@ -7,22 +7,37 @@ import { FaImage } from 'react-icons/fa';
 import { IoMdCloseCircle } from 'react-icons/io';
 import { PropagateLoader } from 'react-spinners';
 import { overrideStyle } from '../../utils/utils';
-import { categoryAdd } from '../../store/Reducers/categoryReducer';
+import {
+  categoryAdd,
+  messageClear,
+  get_category,
+  updateCategory,
+  deleteCategory,
+} from '../../store/Reducers/categoryReducer';
 import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import Search from '../components/Search';
 
 const Category = () => {
   const dispatch = useDispatch();
-  const { loader } = useSelector((state) => state.category);
+  const { loader, successMessage, errorMessage, categorys } = useSelector(
+    (state) => state.category
+  );
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
   const [parPage, setParPage] = useState(5);
   const [show, setShow] = useState(false);
+  const [imageShow, setImage] = useState('');
+  const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
+
   const [state, setState] = useState({
     name: '',
     image: '',
   });
-  const [imageShow, setImage] = useState('');
-  const imageHandel = (e) => {
+
+  const imageHandle = (e) => {
     let files = e.target.files;
     if (files.length > 0) {
       setImage(URL.createObjectURL(files[0]));
@@ -33,11 +48,63 @@ const Category = () => {
     }
   };
 
-  const addCategory = (e) => {
+  const addOrUpdateCategory = (e) => {
     e.preventDefault();
-    console.log(state);
-    dispatch(categoryAdd(state));
+    if (isEdit) {
+      dispatch(updateCategory({ id: editId, ...state }));
+    } else {
+      dispatch(categoryAdd(state));
+    }
+
+    // console.log(state)
   };
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch(messageClear());
+      setState({
+        name: '',
+        image: '',
+      });
+      setImage('');
+      setIsEdit(false);
+      setEditId(null);
+    }
+    if (errorMessage) {
+      toast.error(errorMessage);
+      dispatch(messageClear());
+    }
+  }, [successMessage, errorMessage, dispatch]);
+
+  useEffect(() => {
+    const obj = {
+      parPage: parseInt(parPage),
+      page: parseInt(currentPage),
+      searchValue,
+    };
+    dispatch(get_category(obj));
+  }, [searchValue, currentPage, parPage]);
+
+  /// Handle Edit Button
+  const handleEdit = (category) => {
+    setState({
+      name: category.name,
+      image: category.image,
+    });
+    setImage(category.image);
+    setEditId(category._id);
+    setIsEdit(true);
+    setShow(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure to delete category?')) {
+      console.log('delete category id', id);
+      dispatch(deleteCategory(id));
+    }
+  };
+
   return (
     <div className="px-2 lg:px-7 pt-5">
       <div className="flex lg:hidden justify-between items-center mb-5 p-4 bg-[#6a5fdf] rounded-md">
@@ -49,24 +116,15 @@ const Category = () => {
           Add
         </button>
       </div>
+
       <div className="flex flex-wrap w-full">
         <div className="w-full lg:w-7/12">
           <div className="w-full p-4 bg-[#6a5fdf] rounded-md">
-            <div className="flex justify-between items-center">
-              <select
-                onChange={(e) => setParPage(parseInt(e.target.value))}
-                className="px-4 py-2 focus:border-indigo-500 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-              </select>
-              <input
-                className="px-4 py-2 focus:border-indigo-500 outline-none bg-[#6a5fdf] border border-slate-700 rounded-md text-[#d0d2d6]"
-                type="text"
-                placeholder="search"
-              />
-            </div>
+            <Search
+              setParPage={setParPage}
+              setSearchValue={setSearchValue}
+              searchValue={searchValue}
+            />
 
             <div className="relative overflow-x-auto">
               <table className="w-full text-sm text-left text-[#d0d2d6]">
@@ -88,13 +146,13 @@ const Category = () => {
                 </thead>
 
                 <tbody>
-                  {[1, 2, 3, 4, 5].map((d, i) => (
+                  {categorys.map((d, i) => (
                     <tr key={i}>
                       <td
                         scope="row"
                         className="py-1 px-4 font-medium whitespace-nowrap"
                       >
-                        {d}
+                        {i + 1}
                       </td>
                       <td
                         scope="row"
@@ -102,7 +160,7 @@ const Category = () => {
                       >
                         <img
                           className="w-[45px] h-[45px]"
-                          src={`http://localhost:3000/images/category/${d}.jpg`}
+                          src={d.image}
                           alt=""
                         />
                       </td>
@@ -110,7 +168,7 @@ const Category = () => {
                         scope="row"
                         className="py-1 px-4 font-medium whitespace-nowrap"
                       >
-                        Tshirt
+                        {d.name}
                       </td>
 
                       <td
@@ -118,11 +176,17 @@ const Category = () => {
                         className="py-1 px-4 font-medium whitespace-nowrap"
                       >
                         <div className="flex justify-start items-center gap-4">
-                          <Link className="p-[6px] bg-yellow-500 rounded hover:shadow-lg hover:shadow-yellow-500/50">
+                          <Link
+                            className="p-[6px] bg-yellow-500 rounded hover:shadow-lg hover:shadow-yellow-500/50"
+                            onClick={() => handleEdit(d)}
+                          >
                             {' '}
                             <FaEdit />{' '}
                           </Link>
-                          <Link className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50">
+                          <Link
+                            className="p-[6px] bg-red-500 rounded hover:shadow-lg hover:shadow-red-500/50"
+                            onClick={() => handleDelete(d._id)}
+                          >
                             {' '}
                             <FaTrash />{' '}
                           </Link>
@@ -155,13 +219,16 @@ const Category = () => {
             <div className="bg-[#6a5fdf] h-screen lg:h-auto px-3 py-2 lg:rounded-md text-[#d0d2d6]">
               <div className="flex justify-between items-center mb-4">
                 <h1 className="text-[#d0d2d6] font-semibold text-xl mb-4 w-full text-center ">
-                  Add Category
+                  {' '}
+                  {isEdit ? 'Edit Category' : 'Add Category'}{' '}
                 </h1>
+
                 <div onClick={() => setShow(false)} className="block lg:hidden">
                   <IoMdCloseCircle />
                 </div>
               </div>
-              <form onSubmit={addCategory}>
+
+              <form onSubmit={addOrUpdateCategory}>
                 <div className="flex flex-col w-full gap-1 mb-3">
                   <label htmlFor="name"> Category Name</label>
                   <input
@@ -176,13 +243,14 @@ const Category = () => {
                     placeholder="Category Name"
                   />
                 </div>
+
                 <div>
                   <label
                     className="flex justify-center items-center flex-col h-[238px] cursor-pointer border border-dashed hover:border-red-500 w-full border-[#d0d2d6]"
                     htmlFor="image"
                   >
                     {imageShow ? (
-                      <img className="h-full w-full" src={imageShow} />
+                      <img className="w-full h-full" src={imageShow} />
                     ) : (
                       <>
                         <span>
@@ -193,23 +261,24 @@ const Category = () => {
                     )}
                   </label>
                   <input
-                    onChange={imageHandel}
+                    onChange={imageHandle}
                     className="hidden"
                     type="file"
                     name="image"
                     id="image"
                   />
-                  <div className="mt-3">
+                  <div className="mt-4">
                     <button
-                      disabled={loader}
-                      type="submit"
-                      className="bg-[#4c43a1] w-full p-2 rounded-md text-white font-bold hover:bg-[#5d54b8] transition duration-200"
+                      disabled={loader ? true : false}
+                      className="bg-red-500 w-full hover:shadow-red-300/50 hover:shadow-lg text-white rounded-md px-7 py-2 mb-3"
                     >
                       {loader ? (
                         <PropagateLoader
-                          color="white"
+                          color="#fff"
                           cssOverride={overrideStyle}
                         />
+                      ) : isEdit ? (
+                        'Update Category'
                       ) : (
                         'Add Category'
                       )}
