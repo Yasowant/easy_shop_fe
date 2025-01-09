@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { BiLogOutCircle } from 'react-icons/bi';
 import { getNav } from '../navigation/index';
 import { useSelector } from 'react-redux';
+import logo from '../logo.png';
 
 const Sidebar = ({ showSidebar, setShowSidebar }) => {
   const { role } = useSelector((state) => state.auth);
@@ -29,11 +30,7 @@ const Sidebar = ({ showSidebar, setShowSidebar }) => {
       >
         <div className="h-[70px] flex justify-center items-center">
           <Link to="/" className="w-[180px] h-[50px]">
-            <img
-              className="w-full h-full"
-              src="http://localhost:3000/images/logo.png"
-              alt=""
-            />
+            <img className="w-full h-full" src={logo} alt="" />
           </Link>
         </div>
         <div className="px-[16px]">
