@@ -9,6 +9,8 @@ function App() {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
 
+  console.log("yasowant token",token)
+
   const [allRoutes, setAllRoutes] = useState([...publicRoutes]);
 
   useEffect(() => {
