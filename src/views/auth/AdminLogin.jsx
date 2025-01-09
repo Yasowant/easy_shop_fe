@@ -4,7 +4,7 @@ import { admin_login } from '../../store/Reducers/authReducer';
 import { PropagateLoader } from 'react-spinners';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { logo } from '../../../public/images/logo.png';
+import logo from '../../logo.png';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
