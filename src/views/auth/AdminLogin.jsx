@@ -4,6 +4,7 @@ import { admin_login } from '../../store/Reducers/authReducer';
 import { PropagateLoader } from 'react-spinners';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { logo } from '../../../public/images/logo.png';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -58,7 +59,8 @@ const AdminLogin = () => {
             <div className="w-[180px] h-[50px]">
               <img
                 className="w-full h-full"
-                src="http://localhost:3000/images/logo.png"
+                // src="http://localhost:3000/images/logo.png"
+                src={logo}
                 alt="logo"
               />
             </div>
